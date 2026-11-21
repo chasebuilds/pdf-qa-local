@@ -6,6 +6,10 @@ Ask questions about a folder of PDFs and get answers that cite the file and page
 
 Built by Chase Builds. Useful for contracts, manuals, policies and reports that cannot be uploaded to a hosted AI service.
 
+**Measured on invented test manuals with a local model:** the cited page was right on 29 of 30 answerable questions, and all 12 questions the documents could not answer were refused. Details in [Benchmark](#benchmark).
+
+![The question page: an answer with its file and page cited, and the passages it came from](docs/screenshot.png)
+
 ## How it works
 
 ```
@@ -50,10 +54,6 @@ streamlit run src/pdfqa/ui.py
 ```
 
 Settings by environment variable: `PDFQA_MODEL` (default `gemma4:e4b-it-qat`), `PDFQA_EMBED_MODEL` (default `nomic-embed-text`), `PDFQA_OLLAMA_URL` (default `http://localhost:11434`). The index lives in `.pdfqa/index.db`; change it with `--db`.
-
-![Streamlit UI in stub mode](docs/screenshot.png)
-
-The Streamlit page, shown in stub mode. It lists the retrieved passages with their scores under each answer.
 
 ## Benchmark
 
