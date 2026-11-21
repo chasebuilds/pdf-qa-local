@@ -1,0 +1,18 @@
+[
+  {
+    "embedder": "hash-512",
+    "llm": "stub-extractive",
+    "documents": 6,
+    "chunks": 30,
+    "answerable_questions": 90,
+    "unanswerable_questions": 12,
+    "retrieval_hit_at_5": 0.989,
+    "retrieval_hit_at_1": 0.778,
+    "answer_contains_fact": 0.978,
+    "citation_correct": 0.978,
+    "false_refusal_rate": 0.022,
+    "correct_refusal_rate": 0.75,
+    "index_seconds": 0.0,
+    "ask_seconds_per_question": 0.0
+  }
+]
