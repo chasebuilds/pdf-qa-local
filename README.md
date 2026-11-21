@@ -51,18 +51,31 @@ streamlit run src/pdfqa/ui.py
 
 Settings by environment variable: `PDFQA_MODEL` (default `gemma4:e4b-it-qat`), `PDFQA_EMBED_MODEL` (default `nomic-embed-text`), `PDFQA_OLLAMA_URL` (default `http://localhost:11434`). The index lives in `.pdfqa/index.db`; change it with `--db`.
 
-![Streamlit UI](docs/screenshot.png)
+![Streamlit UI in stub mode](docs/screenshot.png)
+
+The Streamlit page, shown in stub mode. It lists the retrieved passages with their scores under each answer.
 
 ## Benchmark
 
-`bench/synth.py` writes PDFs with reportlab from invented content (made-up product names, pressures, warranties, plants) and a question list with known answers: 90 answerable questions across 6 manuals, plus 12 that the documents cannot answer (8 about products that do not exist, 4 unrelated). Refusal thresholds were set on corpus seed 1. Numbers below are on seed 2, which they never saw.
+`bench/synth.py` writes PDFs with reportlab from invented content (made-up product names, pressures, warranties, plants) and a question list with known answers: 90 answerable questions across 6 manuals, plus 12 that the documents cannot answer (8 about products that do not exist, 4 unrelated). The stub's refusal threshold was adjusted while looking at corpus seed 1. The Ollama defaults were never tuned. Numbers below are on seed 2.
 
 ```powershell
 python -m bench.run --stub              # offline
 python -m bench.run --ollama --limit 30 # real local models, needs Ollama running
 ```
 
-RESULTS_PLACEHOLDER
+| | Stub (hashed words + extractive) | Ollama (`nomic-embed-text` + `gemma4:e4b-it-qat`) |
+|---|---|---|
+| Questions run | 90 answerable, 12 not answerable | 30 answerable (every third), 12 not answerable |
+| Right page in top 5 | 98.9% | 100% |
+| Right page ranked first | 77.8% | 80.0% |
+| Answer contains the fact | 97.8% | 96.7% |
+| Citation includes the right file and page | 97.8% | 96.7% |
+| Refused although answerable | 2.2% | 0% |
+| Correctly refused when not in the documents | 75.0% | 100% |
+| Seconds per question | under 0.1 | 12.0 (machine shared with other jobs) |
+
+Raw results: `bench/results-stub-seed2.json`, `bench/results-ollama-seed2.json`. The Ollama run is one pass, 42 questions, on one machine (RTX 5070, 12 GB). With 12 refusal questions, each one is 8.3 points, so treat the refusal rate as rough. On seed 1 the same Ollama setup scored 100% / 86.7% / 100% / 100% / 0% / 75% on the same rows (30 questions).
 
 ## Tests
 

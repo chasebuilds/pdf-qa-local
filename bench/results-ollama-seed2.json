@@ -1,0 +1,18 @@
+[
+  {
+    "embedder": "ollama:nomic-embed-text",
+    "llm": "ollama:gemma4:e4b-it-qat",
+    "documents": 6,
+    "chunks": 30,
+    "answerable_questions": 30,
+    "unanswerable_questions": 12,
+    "retrieval_hit_at_5": 1.0,
+    "retrieval_hit_at_1": 0.8,
+    "answer_contains_fact": 0.967,
+    "citation_correct": 0.967,
+    "false_refusal_rate": 0.0,
+    "correct_refusal_rate": 1.0,
+    "index_seconds": 0.5,
+    "ask_seconds_per_question": 12.0
+  }
+]

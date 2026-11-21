@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import streamlit as st
@@ -14,7 +15,7 @@ st.set_page_config(page_title="pdf-qa-local", page_icon="📄")
 st.title("pdf-qa-local")
 st.caption("Questions about your PDFs. Everything runs on this machine.")
 
-stub = st.sidebar.checkbox("Stub mode (no Ollama)", value=False)
+stub = st.sidebar.checkbox("Stub mode (no Ollama)", value=os.environ.get("PDFQA_UI_STUB") == "1")
 db = Path(st.sidebar.text_input("Index file", str(DEFAULT_DB)))
 folder = st.sidebar.text_input("PDF folder", "docs")
 
@@ -28,7 +29,7 @@ if st.sidebar.button("Index folder"):
     finally:
         idx.close()
 
-question = st.text_input("Ask a question")
+question = st.text_input("Ask a question", value=st.query_params.get("q", ""))
 if question:
     try:
         retriever = open_retriever(db, make_embedder(stub))
