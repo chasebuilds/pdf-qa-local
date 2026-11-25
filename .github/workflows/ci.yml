@@ -23,3 +23,20 @@ jobs:
       - run: pytest -q
       - name: Offline benchmark (stub model)
         run: python -m bench.run --stub
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: web
+      - run: npm test
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Smoke test the page in headless Chromium
+        working-directory: web
+        run: npm run smoke

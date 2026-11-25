@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Q&amp;A Demo</title>
+<meta name="description" content="Ask questions about PDFs and get answers that cite the file and page. Runs entirely in your browser.">
+<style>
+  :root {
+    --ink: #2a2118; --muted: #6b5a49; --glass: rgba(255, 250, 243, 0.55); --edge: rgba(255, 255, 255, 0.7);
+    --accent: #b4532a; --ok: #2f6b3f; --warn: #8a3b1c;
+    --bg: radial-gradient(circle at 15% 20%, #f6c28b 0, transparent 45%),
+          radial-gradient(circle at 85% 10%, #e98a6b 0, transparent 40%),
+          radial-gradient(circle at 70% 85%, #f3d9a4 0, transparent 50%), #f4e6d4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #f4e9dc; --muted: #c4b29e; --glass: rgba(40, 30, 24, 0.55); --edge: rgba(255, 255, 255, 0.12);
+      --accent: #f0a070; --ok: #8fd19e; --warn: #f3a17f;
+      --bg: radial-gradient(circle at 15% 20%, #6b3a1f 0, transparent 45%),
+            radial-gradient(circle at 85% 10%, #5a2a2a 0, transparent 40%),
+            radial-gradient(circle at 70% 85%, #4a3a1e 0, transparent 50%), #1d1612;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); min-height: 100%; }
+  body { margin: 0; min-height: 100vh; font: 16px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; color: var(--ink); background: transparent; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px 16px 48px; }
+  .panel { background: var(--glass); border: 1px solid var(--edge); border-radius: 20px; padding: 20px; margin-bottom: 16px;
+    backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); box-shadow: 0 8px 30px rgba(60, 30, 10, 0.12); }
+  nav { display: inline-flex; gap: 6px; padding: 6px; border-radius: 999px; margin-bottom: 16px; }
+  nav a { color: var(--ink); text-decoration: none; padding: 6px 14px; border-radius: 999px; font-size: 14px; }
+  nav a:hover { background: var(--edge); }
+  h1 { margin: 0 0 6px; font-size: 28px; }
+  p { margin: 6px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input[type=text] { flex: 1 1 260px; min-width: 0; padding: 12px 16px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); color: var(--ink); font-size: 16px; }
+  button { padding: 12px 20px; border-radius: 999px; border: 0; background: var(--accent); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: wait; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chips button { background: var(--glass); color: var(--ink); border: 1px solid var(--edge); font-weight: 500; font-size: 14px; padding: 8px 14px; }
+  .answer h2 { margin: 0; font-size: 24px; }
+  .cite { display: inline-block; margin-top: 6px; padding: 3px 12px; border-radius: 999px; background: var(--ok); color: #fff; font-size: 14px; font-weight: 600; }
+  .refused h2 { color: var(--warn); }
+  .refused .cite { display: none; }
+  ol { padding-left: 20px; margin: 8px 0 0; font-size: 14px; }
+  li { margin-bottom: 6px; overflow-wrap: anywhere; }
+  label { font-size: 14px; }
+  #status { font-size: 14px; color: var(--muted); margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <nav class="panel"><a href="https://github.com/chasebuilds/pdf-qa-local">Code</a><a href="https://github.com/chasebuilds/pdf-qa-local#benchmark">Benchmark</a><a href="https://chasebuilds.github.io">Chase Builds</a></nav>
+  <section class="panel">
+    <h1>Ask your PDFs</h1>
+    <p>Answers cite the file and page. The PDFs, the search index and both models stay in this browser; nothing is uploaded.</p>
+    <p class="muted">Loaded: <span id="docs">loading the three invented sample manuals</span></p>
+    <p><label>Use your own PDFs: <input id="files" type="file" accept="application/pdf" multiple></label>
+       <label><input id="replace" type="checkbox" checked> replace the samples</label></p>
+  </section>
+  <section class="panel">
+    <form id="form">
+      <input id="q" type="text" placeholder="What is the maximum pressure of the Zinorin 400 unit?" aria-label="Question">
+      <button id="ask" type="submit" disabled>Ask</button>
+    </form>
+    <div class="chips">
+      <button type="button" data-q="What is the maximum pressure of the Zinorin 400 unit?">Zinorin 400 pressure</button>
+      <button type="button" data-q="Where is the Kesttal 400 unit assembled?">Kesttal 400 plant</button>
+      <button type="button" data-q="How heavy is the Faydle 400 unit?">Faydle 400 weight</button>
+      <button type="button" data-q="What is the maximum pressure of the Quorvex 900 unit?">Quorvex 900 (not in the PDFs)</button>
+    </div>
+    <div id="status" role="status">Starting...</div>
+  </section>
+  <section id="answer" class="panel answer" hidden aria-live="polite">
+    <h2 id="answer-text"></h2>
+    <span id="answer-cite" class="cite"></span>
+    <p id="answer-sentence" class="muted"></p>
+    <p class="muted">Passages it searched, in search rank order:</p>
+    <ol id="sources"></ol>
+  </section>
+  <p class="muted">Text-layer PDFs only, no OCR. A small extractive model picks the answer span from one passage, so it quotes rather than explains. Check the cited page. Chase Builds, MIT license.</p>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

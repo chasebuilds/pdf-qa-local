@@ -1,0 +1,68 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "samples/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Unit tests and local smoke test
+        working-directory: web
+        run: npm test && npm run smoke
+      - name: Assemble site
+        run: |
+          mkdir -p _site/samples
+          cp web/index.html web/app.js web/pipeline.js _site/
+          cp samples/*.pdf _site/samples/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  live-smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Smoke test the live page
+        working-directory: web
+        env:
+          BASE_URL: ${{ needs.deploy.outputs.url }}
+        run: npm run smoke

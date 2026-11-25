@@ -2,15 +2,23 @@
 
 [![CI](https://github.com/chasebuilds/pdf-qa-local/actions/workflows/ci.yml/badge.svg)](https://github.com/chasebuilds/pdf-qa-local/actions/workflows/ci.yml)
 
+**[Live demo in your browser](https://chasebuilds.github.io/pdf-qa-local/)** (no install, nothing uploaded).
+
 Ask questions about a folder of PDFs and get answers that cite the file and page. The model and the embeddings both run on your own machine through [Ollama](https://ollama.com), so the documents never leave it. When the documents do not contain the answer, it says so.
 
 Built by Chase Builds. Useful for contracts, manuals, policies and reports that cannot be uploaded to a hosted AI service.
 
 **Measured on invented test manuals with a local model:** the cited page was right on 29 of 30 answerable questions, and all 12 questions the documents could not answer were refused. Details in [Benchmark](#benchmark).
 
+## Try it in the browser
+
+[chasebuilds.github.io/pdf-qa-local](https://chasebuilds.github.io/pdf-qa-local/) runs a smaller version of the same pipeline entirely in the page: [pdf.js](https://mozilla.github.io/pdf.js/) reads the text, [transformers.js](https://huggingface.co/docs/transformers.js) runs `all-MiniLM-L6-v2` for retrieval and `distilbert-base-cased-distilled-squad` to pick the answer span, and the answer cites file and page. It loads the three sample manuals, or your own PDFs, which never leave the browser. The first visit downloads about 90 MB of model files, cached after that. On the same 42 benchmark questions it cited the right page on 29 of 30 and refused all 12 (see [Benchmark](#benchmark)). It quotes a span instead of writing a sentence, so it is a demo of retrieval and citation, not of a chat model. Code in [`web/`](web/).
+
+![Browser demo: the answer 12 bar with the citation manual_02.pdf p.3 and the passages it searched](docs/demo-web.png)
+
 ## See it run
 
-It needs a local model through Ollama, so there is no browser demo. This is a real run on the three invented manuals in [`samples/`](samples/) with Ollama on localhost (`gemma4:e4b-it-qat` for answers, `nomic-embed-text` for embeddings): index, one question the manuals answer, one they do not. Captured from the terminal unedited ([full transcript](docs/run.txt)).
+The full version needs a local model through Ollama. This is a real run on the three invented manuals in [`samples/`](samples/) with Ollama on localhost (`gemma4:e4b-it-qat` for answers, `nomic-embed-text` for embeddings): index, one question the manuals answer, one they do not. Captured from the terminal unedited ([full transcript](docs/run.txt)).
 
 ![Terminal: install, pdfqa index samples, an answer citing manual_02.pdf p.3, and a refusal for a product not in the manuals](docs/run.png)
 
@@ -82,20 +90,23 @@ Settings by environment variable: `PDFQA_MODEL` (default `gemma4:e4b-it-qat`), `
 ```powershell
 python -m bench.run --stub              # offline
 python -m bench.run --ollama --limit 30 # real local models, needs Ollama running
+python -m bench.export_questions --seed 2   # browser benchmark: write PDFs + questions.json
+cd web; npm ci; npx playwright install chromium
+node bench.mjs --seed 2 --limit 30          # runs the real page in headless Chromium
 ```
 
-| | Stub (hashed words + extractive) | Ollama (`nomic-embed-text` + `gemma4:e4b-it-qat`) |
-|---|---|---|
-| Questions run | 90 answerable, 12 not answerable | 30 answerable (every third), 12 not answerable |
-| Right page in top 5 | 98.9% | 100% |
-| Right page ranked first | 77.8% | 80.0% |
-| Answer contains the fact | 97.8% | 96.7% |
-| Citation includes the right file and page | 97.8% | 96.7% |
-| Refused although answerable | 2.2% | 0% |
-| Correctly refused when not in the documents | 75.0% | 100% |
-| Seconds per question | under 0.1 | 12.0 (machine shared with other jobs) |
+| | Stub (hashed words + extractive) | Ollama (`nomic-embed-text` + `gemma4:e4b-it-qat`) | Browser (MiniLM + DistilBERT extractive) |
+|---|---|---|---|
+| Questions run | 90 answerable, 12 not answerable | 30 answerable (every third), 12 not answerable | 30 answerable (every third), 12 not answerable |
+| Right page in top 5 | 98.9% | 100% | 96.7% |
+| Right page ranked first | 77.8% | 80.0% | 73.3% |
+| Answer contains the fact | 97.8% | 96.7% | 96.7% |
+| Citation includes the right file and page | 97.8% | 96.7% | 96.7% (29 of 30) |
+| Refused although answerable | 2.2% | 0% | 3.3% |
+| Correctly refused when not in the documents | 75.0% | 100% | 100% (12 of 12) |
+| Seconds per question | under 0.1 | 12.0 (machine shared with other jobs) | 0.17 (headless Chromium, CPU) |
 
-Raw results: `bench/results-stub-seed2.json`, `bench/results-ollama-seed2.json`. The Ollama run is one pass, 42 questions, on one machine (RTX 5070, 12 GB). With 12 refusal questions, each one is 8.3 points, so treat the refusal rate as rough. On seed 1 the same Ollama setup scored 100% / 86.7% / 100% / 100% / 0% / 75% on the same rows (30 questions).
+Raw results: `bench/results-stub-seed2.json`, `bench/results-ollama-seed2.json`, `bench/results-web-seed2-every3rd.json`. On all 90 answerable seed 2 questions the browser version cited the right page on 89 (98.9%) and still refused 12 of 12 (`bench/results-web-seed2.json`); on seed 1 it was 87 of 90 and 12 of 12. Its refusal rule (every name and number in the question, such as "Quorvex 900", must appear in the passage, plus the word-overlap check and a QA score floor) was written knowing how the synthetic questions are phrased, so its perfect refusal score says more about this test set than about real documents. The Ollama run is one pass, 42 questions, on one machine (RTX 5070, 12 GB). With 12 refusal questions, each one is 8.3 points, so treat the refusal rate as rough. On seed 1 the same Ollama setup scored 100% / 86.7% / 100% / 100% / 0% / 75% on the same rows (30 questions).
 
 ## Tests
 
@@ -104,7 +115,7 @@ pip install -e ".[dev]"
 ruff check . ; mypy ; pytest
 ```
 
-The tests use the hashed-word embedder and an extractive stub model, so they need no Ollama and no network. CI runs ruff, mypy, pytest and the stub benchmark on Python 3.10 and 3.12.
+The tests use the hashed-word embedder and an extractive stub model, so they need no Ollama and no network. CI runs ruff, mypy, pytest and the stub benchmark on Python 3.10 and 3.12, plus the browser page's unit tests and a Playwright smoke test (`cd web; npm test; npm run smoke`). The Pages workflow builds, deploys, then runs the same smoke test against the live URL.
 
 ## Limitations
 

@@ -1,0 +1,18 @@
+[
+  {
+    "embedder": "transformers.js:Xenova/all-MiniLM-L6-v2 (q8)",
+    "llm": "transformers.js:Xenova/distilbert-base-cased-distilled-squad (q8), extractive",
+    "seed": 2,
+    "documents": 6,
+    "answerable_questions": 90,
+    "unanswerable_questions": 12,
+    "retrieval_hit_at_5": 0.989,
+    "retrieval_hit_at_1": 0.756,
+    "answer_contains_fact": 0.989,
+    "citation_correct": 0.989,
+    "false_refusal_rate": 0.011,
+    "correct_refusal_rate": 1,
+    "index_seconds": 4,
+    "ask_seconds_per_question": 0.21
+  }
+]
