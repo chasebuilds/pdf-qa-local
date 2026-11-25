@@ -120,3 +120,11 @@ The tests use the hashed-word embedder and an extractive stub model, so they nee
 ## License
 
 MIT, Chase Builds.
+
+## More from Chase Builds
+
+- **[site-security-check](https://github.com/chasebuilds/site-security-check)**: A gentle, passive checkup of your own website, with a plain-English grade and fixes in order. ([live demo](https://chasebuilds.github.io/site-security-check/))
+- **[table-export-extension](https://github.com/chasebuilds/table-export-extension)**: Export any web table to Excel. No data leaves the browser. ([live demo](https://chasebuilds.github.io/table-export-extension/))
+- **[webgpu-agent-kit](https://github.com/chasebuilds/webgpu-agent-kit)**: Helps AI coding agents write GPU code that actually runs. 10 of 10 examples render clean. ([live demo](https://chasebuilds.github.io/webgpu-agent-kit/))
+
+[All projects, sorted by industry](https://github.com/chasebuilds) · [chasebuilds.github.io](https://chasebuilds.github.io)
