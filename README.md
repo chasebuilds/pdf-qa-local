@@ -8,7 +8,25 @@ Built by Chase Builds. Useful for contracts, manuals, policies and reports that 
 
 **Measured on invented test manuals with a local model:** the cited page was right on 29 of 30 answerable questions, and all 12 questions the documents could not answer were refused. Details in [Benchmark](#benchmark).
 
-![The question page: an answer with its file and page cited, and the passages it came from](docs/screenshot.png)
+## See it run
+
+It needs a local model through Ollama, so there is no browser demo. This is a real run on the three invented manuals in [`samples/`](samples/) with Ollama on localhost (`gemma4:e4b-it-qat` for answers, `nomic-embed-text` for embeddings): index, one question the manuals answer, one they do not. Captured from the terminal unedited ([full transcript](docs/run.txt)).
+
+![Terminal: install, pdfqa index samples, an answer citing manual_02.pdf p.3, and a refusal for a product not in the manuals](docs/run.png)
+
+The answer is right: [`samples/manual_02.pdf`](samples/manual_02.pdf) page 3 gives the Zinorin 400 a maximum pressure of 12 bar. The Quorvex 900 is in none of the manuals, so the model is not asked and the tool says so.
+
+### Run it yourself in 3 commands
+
+Needs [Ollama](https://ollama.com) running with `ollama pull gemma4:e4b-it-qat` and `ollama pull nomic-embed-text` done once. After `git clone https://github.com/chasebuilds/pdf-qa-local` and `cd pdf-qa-local` (Windows shown; on macOS or Linux use `python3` and `.venv/bin/`):
+
+```
+python -m venv .venv && .venv\Scripts\python -m pip install -q .
+.venv\Scripts\pdfqa index samples
+.venv\Scripts\pdfqa ask "What is the maximum pressure of the Zinorin 400 unit?"
+```
+
+No Ollama? `.venv\Scripts\pdfqa --stub index samples` and `--stub ask` run the same pipeline offline with hashed embeddings and an extractive stub instead of a model.
 
 ## How it works
 
@@ -25,6 +43,8 @@ question -> BM25 keyword score + vector cosine -> reciprocal rank fusion -> top 
 - **Page references.** Chunks are cut per page, so every citation is a real page.
 - **Refusal.** If no top chunk matches the question's words and word pairs, or is close enough by vector, the model is not called.
 - **Incremental index.** Re-running `index` skips unchanged files (SHA-256) and drops deleted ones.
+
+![The question page: an answer with its file and page cited, and the passages it came from](docs/screenshot.png)
 
 ## Install
 

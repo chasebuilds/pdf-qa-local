@@ -1,0 +1,16 @@
+> python -m venv .venv && .venv\Scripts\python -m pip install -q .
+[exit 0, 20.6 s]
+
+> .venv\Scripts\pdfqa index samples
+indexed 3 files (12 chunks), skipped 0 unchanged, removed 0, 0 pages had no text
+[exit 0, 3.3 s]
+
+> .venv\Scripts\pdfqa ask "What is the maximum pressure of the Zinorin 400 unit?"
+The Zinorin 400 unit has a maximum pressure of 12 bar [manual_02.pdf p.3].
+
+Sources: manual_02.pdf p.3
+[exit 0, 14.3 s]
+
+> .venv\Scripts\pdfqa ask "How heavy is the Quorvex 900 unit?"
+I could not find that in the documents.
+[exit 0, 14.5 s]
